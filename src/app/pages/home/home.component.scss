@@ -1,6 +1,7 @@
 .home-container {
   min-height: calc(100vh - 80px);
   padding: 2rem;
+  background-color: var(--background);
 }
 
 .hero-section {
@@ -13,9 +14,9 @@
 .hero-title {
   font-size: 3rem;
   font-weight: 800;
-  color: #1f2937;
+  color: var(--text-primary);
   margin: 0 0 1rem 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -23,12 +24,12 @@
 
 .hero-subtitle {
   font-size: 1.5rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin: 0 0 2rem 0;
 }
 
 .hero-content {
   font-size: 1.125rem;
-  color: #4b5563;
+  color: var(--text-secondary);
   line-height: 1.75;
 }

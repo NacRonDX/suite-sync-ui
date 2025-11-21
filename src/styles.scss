@@ -1,5 +1,49 @@
 /* You can add global styles to this file, and also import other style files */
 
+:root {
+  /* Light Theme Colors */
+  --primary: #a9bca4;
+  --secondary: #b87d4c;
+  --accent: #c3a383;
+  --text: #130e0c;
+  --background: #ffffff;
+  --surface: #f9fafb;
+  --border: #e5e7eb;
+  --shadow: rgba(19, 14, 12, 0.1);
+  --shadow-md: rgba(19, 14, 12, 0.15);
+  --shadow-lg: rgba(19, 14, 12, 0.2);
+
+  /* Semantic colors for light theme */
+  --text-primary: #130e0c;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --primary-hover: #98ab93;
+  --secondary-hover: #a56d3d;
+  --accent-hover: #b29272;
+}
+
+[data-theme='dark'] {
+  /* Dark Theme Colors */
+  --primary: #485b43;
+  --secondary: #b37847;
+  --accent: #7c5c3c;
+  --text: #f3eeec;
+  --background: #000000;
+  --surface: #1a1a1a;
+  --border: #2d2d2d;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --shadow-md: rgba(0, 0, 0, 0.4);
+  --shadow-lg: rgba(0, 0, 0, 0.5);
+
+  /* Semantic colors for dark theme */
+  --text-primary: #f3eeec;
+  --text-secondary: #d1ccc9;
+  --text-muted: #9ca3af;
+  --primary-hover: #5a6e54;
+  --secondary-hover: #c58a58;
+  --accent-hover: #8d6d4d;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -18,5 +62,9 @@ body {
     sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f9fafb;
+  background-color: var(--background);
+  color: var(--text);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }

@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-navbar',
@@ -13,6 +14,8 @@ import { AuthService } from '../../services/auth.service';
 export class NavbarComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  protected themeService = inject(ThemeService);
+
   isAuthenticated$ = this.authService.isAuthenticated$;
 
   get isStaffOrAdmin(): boolean {
@@ -22,5 +25,9 @@ export class NavbarComponent {
   onLogout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

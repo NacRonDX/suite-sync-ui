@@ -3,20 +3,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   padding: 2rem;
 }
 
 .activate-card {
-  background: white;
+  background: var(--background);
   border-radius: 1rem;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px var(--shadow-lg);
   padding: 3rem;
   width: 100%;
   max-width: 500px;
   text-align: center;
+  border: 1px solid var(--border);
 }
 
 .activation-content {
@@ -37,12 +36,12 @@
 .activate-title {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .activate-message {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 1.125rem;
   line-height: 1.75;
   margin: 0;
@@ -55,8 +54,8 @@
 .spinner {
   width: 60px;
   height: 60px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #2563eb;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -76,20 +75,20 @@
 }
 
 .countdown {
-  background-color: #f3f4f6;
+  background-color: var(--surface);
   padding: 1rem;
   border-radius: 0.5rem;
   margin-top: 1rem;
 
   p {
     margin: 0;
-    color: #4b5563;
+    color: var(--text-secondary);
     font-size: 1rem;
   }
 
   .countdown-number {
     font-weight: 700;
-    color: #2563eb;
+    color: var(--primary);
     font-size: 1.25rem;
   }
 }
@@ -117,24 +116,24 @@
 }
 
 .btn-primary {
-  background-color: #2563eb;
-  color: white;
+  background-color: var(--primary);
+  color: var(--text-primary);
 
   &:hover {
-    background-color: #1d4ed8;
+    background-color: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px var(--shadow);
   }
 }
 
 .btn-secondary {
   background-color: transparent;
-  color: #2563eb;
-  border: 2px solid #2563eb;
+  color: var(--primary);
+  border: 2px solid var(--primary);
 
   &:hover {
-    background-color: #2563eb;
-    color: white;
+    background-color: var(--primary);
+    color: var(--background);
   }
 }
 
