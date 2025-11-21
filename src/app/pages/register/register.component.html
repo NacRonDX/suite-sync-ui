@@ -1,0 +1,364 @@
+<div class="register-container">
+  <div class="register-card">
+    <h1 class="register-title">Create Your Account</h1>
+    <p class="register-subtitle">
+      Join Suite Sync to start booking your perfect stay
+    </p>
+
+    @if (successMessage) {
+      <div class="success-message">
+        <svg
+          class="icon-success"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9 12l2 2 4-4"></path>
+        </svg>
+        <div>
+          <p class="success-title">{{ successMessage }}</p>
+          <a routerLink="/login" class="link-to-login">Go to Login</a>
+        </div>
+      </div>
+    }
+
+    @if (!successMessage) {
+      <form (ngSubmit)="onSubmit()" class="register-form">
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email">Email <span class="required">*</span></label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="formData.email"
+            placeholder="your.email@example.com"
+            required
+            [disabled]="isLoading"
+            class="form-input" />
+        </div>
+
+        <!-- First Name & Last Name -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName"
+              >First Name <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              [(ngModel)]="formData.firstName"
+              placeholder="John"
+              required
+              [disabled]="isLoading"
+              class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="lastName"
+              >Last Name <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              [(ngModel)]="formData.lastName"
+              placeholder="Doe"
+              required
+              [disabled]="isLoading"
+              class="form-input" />
+          </div>
+        </div>
+
+        <!-- Phone Number -->
+        <div class="form-group">
+          <label for="phoneNumber"
+            >Phone Number <span class="required">*</span></label
+          >
+          <div class="phone-input-group">
+            <select
+              [(ngModel)]="formData.countryCode"
+              name="countryCode"
+              class="country-code-select"
+              [disabled]="isLoading">
+              @for (
+                country of countryCodes;
+                track country.code + country.country
+              ) {
+                <option [value]="country.code">
+                  {{ country.flag }} {{ country.code }}
+                </option>
+              }
+            </select>
+            <input
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              [(ngModel)]="formData.phoneNumber"
+              placeholder="5551234567"
+              required
+              [disabled]="isLoading"
+              class="form-input phone-input" />
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="password">Password <span class="required">*</span></label>
+          <div class="password-input-wrapper">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              name="password"
+              [(ngModel)]="formData.password"
+              placeholder="Enter your password"
+              required
+              [disabled]="isLoading"
+              class="form-input" />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility('password')"
+              [disabled]="isLoading">
+              @if (showPassword) {
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              } @else {
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              }
+            </button>
+          </div>
+          @if (formData.password.length > 0) {
+            <div class="password-requirements">
+              <div
+                class="requirement"
+                [class.valid]="
+                  passwordValidation.minLength && passwordValidation.maxLength
+                ">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>8-16 characters</span>
+              </div>
+              <div
+                class="requirement"
+                [class.valid]="passwordValidation.hasNumber">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Contains a number</span>
+              </div>
+              <div
+                class="requirement"
+                [class.valid]="passwordValidation.hasSpecialChar">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Contains special char (!&#64;#$%)</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label for="confirmPassword"
+            >Confirm Password <span class="required">*</span></label
+          >
+          <div class="password-input-wrapper">
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              id="confirmPassword"
+              name="confirmPassword"
+              [(ngModel)]="formData.confirmPassword"
+              placeholder="Confirm your password"
+              required
+              [disabled]="isLoading"
+              class="form-input"
+              [class.error]="
+                formData.confirmPassword.length > 0 && !passwordsMatch
+              "
+              [class.success]="passwordsMatch" />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility('confirmPassword')"
+              [disabled]="isLoading">
+              @if (showConfirmPassword) {
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              } @else {
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              }
+            </button>
+          </div>
+          @if (formData.confirmPassword.length > 0 && !passwordsMatch) {
+            <span class="field-error">Passwords do not match</span>
+          }
+        </div>
+
+        <!-- Address Section -->
+        <div class="section-divider">
+          <span>Address Information</span>
+        </div>
+
+        <div class="form-group">
+          <label for="street"
+            >Street Address <span class="required">*</span></label
+          >
+          <input
+            type="text"
+            id="street"
+            name="street"
+            [(ngModel)]="formData.address.street"
+            placeholder="123 Main Street"
+            required
+            [disabled]="isLoading"
+            class="form-input" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">City <span class="required">*</span></label>
+            <input
+              type="text"
+              id="city"
+              name="city"
+              [(ngModel)]="formData.address.city"
+              placeholder="New York"
+              required
+              [disabled]="isLoading"
+              class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="state"
+              >State/Province <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              id="state"
+              name="state"
+              [(ngModel)]="formData.address.state"
+              placeholder="NY"
+              required
+              [disabled]="isLoading"
+              class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="postalCode"
+              >Postal Code <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              id="postalCode"
+              name="postalCode"
+              [(ngModel)]="formData.address.postalCode"
+              placeholder="10001"
+              required
+              [disabled]="isLoading"
+              class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="country">Country <span class="required">*</span></label>
+            <input
+              type="text"
+              id="country"
+              name="country"
+              [(ngModel)]="formData.address.country"
+              placeholder="United States"
+              required
+              [disabled]="isLoading"
+              class="form-input" />
+          </div>
+        </div>
+
+        @if (errorMessage) {
+          <div class="error-message">
+            {{ errorMessage }}
+          </div>
+        }
+
+        <button type="submit" [disabled]="isLoading" class="btn-register">
+          @if (isLoading) {
+            <span class="spinner-small"></span>
+            <span>Creating Account...</span>
+          } @else {
+            <span>Create Account</span>
+          }
+        </button>
+
+        <div class="login-link">
+          Already have an account? <a routerLink="/login">Log in</a>
+        </div>
+      </form>
+    }
+  </div>
+</div>
