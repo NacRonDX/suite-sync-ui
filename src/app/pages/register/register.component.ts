@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -39,6 +39,9 @@ export class RegisterComponent {
   private userService = inject(UserService);
   private router = inject(Router);
 
+  @ViewChild('countrySearchInput')
+  countrySearchInput?: ElementRef<HTMLInputElement>;
+
   formData: RegisterForm = {
     email: '',
     firstName: '',
@@ -78,6 +81,16 @@ export class RegisterComponent {
   successMessage = '';
   showPassword = false;
   showConfirmPassword = false;
+  showCountryDropdown = false;
+  countrySearchTerm = '';
+  filteredCountryCodes = [...this.countryCodes];
+
+  get selectedCountry() {
+    return (
+      this.countryCodes.find((c) => c.code === this.formData.countryCode) ||
+      this.countryCodes[0]
+    );
+  }
 
   get passwordValidation(): PasswordValidation {
     const password = this.formData.password;
@@ -112,6 +125,48 @@ export class RegisterComponent {
     } else {
       this.showConfirmPassword = !this.showConfirmPassword;
     }
+  }
+
+  toggleCountryDropdown(): void {
+    this.showCountryDropdown = !this.showCountryDropdown;
+    if (this.showCountryDropdown) {
+      this.countrySearchTerm = '';
+      this.filteredCountryCodes = [...this.countryCodes];
+      setTimeout(() => {
+        this.countrySearchInput?.nativeElement.focus();
+      }, 0);
+    }
+  }
+
+  selectCountry(country: {
+    code: string;
+    flag: string;
+    country: string;
+  }): void {
+    this.formData.countryCode = country.code;
+    this.showCountryDropdown = false;
+    this.countrySearchTerm = '';
+  }
+
+  filterCountries(): void {
+    const searchLower = this.countrySearchTerm.toLowerCase();
+    this.filteredCountryCodes = this.countryCodes.filter(
+      (c) =>
+        c.country.toLowerCase().includes(searchLower) ||
+        c.code.includes(searchLower)
+    );
+  }
+
+  onCountryDropdownBlur(event: FocusEvent): void {
+    setTimeout(() => {
+      const relatedTarget = event.relatedTarget as HTMLElement;
+      if (
+        !relatedTarget ||
+        !relatedTarget.closest('.country-dropdown-container')
+      ) {
+        this.showCountryDropdown = false;
+      }
+    }, 200);
   }
 
   onSubmit(): void {

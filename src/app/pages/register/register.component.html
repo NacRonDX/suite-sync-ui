@@ -80,20 +80,60 @@
             >Phone Number <span class="required">*</span></label
           >
           <div class="phone-input-group">
-            <select
-              [(ngModel)]="formData.countryCode"
-              name="countryCode"
-              class="country-code-select"
-              [disabled]="isLoading">
-              @for (
-                country of countryCodes;
-                track country.code + country.country
-              ) {
-                <option [value]="country.code">
-                  {{ country.flag }} {{ country.code }}
-                </option>
+            <div class="country-dropdown-container">
+              <button
+                type="button"
+                class="country-code-button"
+                (click)="toggleCountryDropdown()"
+                [disabled]="isLoading">
+                <span class="country-display">
+                  {{ selectedCountry.flag }} {{ selectedCountry.code }}
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="dropdown-icon">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              @if (showCountryDropdown) {
+                <div class="country-dropdown">
+                  <input
+                    #countrySearchInput
+                    type="text"
+                    class="country-search"
+                    [(ngModel)]="countrySearchTerm"
+                    (ngModelChange)="filterCountries()"
+                    placeholder="Search country..."
+                    name="countrySearch"
+                    (click)="$event.stopPropagation()" />
+                  <div class="country-list">
+                    @for (
+                      country of filteredCountryCodes;
+                      track country.code + country.country
+                    ) {
+                      <button
+                        type="button"
+                        class="country-option"
+                        (click)="selectCountry(country)">
+                        <span class="country-flag">{{ country.flag }}</span>
+                        <span class="country-name">{{ country.country }}</span>
+                        <span class="country-code">{{ country.code }}</span>
+                      </button>
+                    }
+                    @if (filteredCountryCodes.length === 0) {
+                      <div class="no-results">No countries found</div>
+                    }
+                  </div>
+                </div>
               }
-            </select>
+            </div>
             <input
               type="tel"
               id="phoneNumber"
