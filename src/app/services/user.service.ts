@@ -1,20 +1,19 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
-  private readonly API_BASE_URL =
-    'https://suite-sync-api-bcad89967ee2.herokuapp.com/api/v1';
-
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
 
   activateAccount(userId: string, token: string): Observable<any> {
-    return this.http.post(
-      `${this.API_BASE_URL}/users/${userId}/activate?token=${token}`,
-      {}
+    const activateUrl = this.configService.getApiUrl(
+      `users/${userId}/activate?token=${token}`
     );
+    return this.http.post(activateUrl, {});
   }
 }

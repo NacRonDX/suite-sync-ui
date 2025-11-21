@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { ConfigService } from './config.service';
 
 interface LoginResponse {
   token: string;
@@ -18,8 +19,9 @@ interface LoginCredentials {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly API_URL =
-    'https://suite-sync-api-bcad89967ee2.herokuapp.com/api/v1/auth/login';
+  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
+
   private readonly TOKEN_KEY = 'auth_token';
   private readonly REFRESH_TOKEN_KEY = 'refresh_token';
   private readonly EXPIRES_IN_KEY = 'expires_in';
@@ -29,10 +31,9 @@ export class AuthService {
   );
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
-
   login(credentials: LoginCredentials): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(this.API_URL, credentials).pipe(
+    const loginUrl = this.configService.getApiUrl('auth/login');
+    return this.http.post<LoginResponse>(loginUrl, credentials).pipe(
       tap((response) => {
         this.storeTokens(response);
         this.isAuthenticatedSubject.next(true);
