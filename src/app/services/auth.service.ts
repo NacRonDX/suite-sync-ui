@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { tap, catchError, shareReplay } from 'rxjs/operators';
 import { ConfigService } from './config.service';
 
 interface LoginResponse {
@@ -13,6 +13,16 @@ interface LoginResponse {
 interface LoginCredentials {
   email: string;
   password: string;
+}
+
+interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+interface RefreshTokenResponse {
+  token: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
 @Injectable({
@@ -30,6 +40,10 @@ export class AuthService {
     this.hasValidToken()
   );
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+
+  private refreshTokenInProgress = false;
+  private refreshTokenObservable: Observable<RefreshTokenResponse> | null =
+    null;
 
   login(credentials: LoginCredentials): Observable<LoginResponse> {
     const loginUrl = this.configService.getApiUrl('auth/login');
@@ -60,11 +74,90 @@ export class AuthService {
     return this.hasValidToken();
   }
 
+  getUserRole(): string | null {
+    const token = this.getToken();
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const payload = this.decodeToken(token);
+      return payload?.userType || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  hasRole(role: string): boolean {
+    const userRole = this.getUserRole();
+    return userRole === role;
+  }
+
+  isStaffOrAdmin(): boolean {
+    const userRole = this.getUserRole();
+    return userRole === 'STAFF' || userRole === 'ADMIN';
+  }
+
+  refreshAuthToken(): Observable<RefreshTokenResponse> {
+    const refreshToken = this.getRefreshToken();
+
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    if (this.refreshTokenObservable) {
+      console.log('Token refresh already in progress, reusing observable');
+      return this.refreshTokenObservable;
+    }
+
+    this.refreshTokenInProgress = true;
+    const refreshUrl = this.configService.getApiUrl('auth/refresh');
+
+    this.refreshTokenObservable = this.http
+      .post<RefreshTokenResponse>(refreshUrl, { refreshToken })
+      .pipe(
+        tap((response) => {
+          this.storeTokens(response);
+          this.isAuthenticatedSubject.next(true);
+          this.refreshTokenInProgress = false;
+          this.refreshTokenObservable = null;
+          console.log('Token refreshed successfully');
+        }),
+        catchError((error) => {
+          this.refreshTokenInProgress = false;
+          this.refreshTokenObservable = null;
+          console.error('Token refresh failed:', error);
+          return throwError(() => error);
+        }),
+        shareReplay(1)
+      );
+
+    return this.refreshTokenObservable;
+  }
+
+  private decodeToken(token: string): any {
+    try {
+      const payload = token.split('.')[1];
+      const decoded = atob(payload);
+      return JSON.parse(decoded);
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  }
+
   private storeTokens(response: LoginResponse): void {
     localStorage.setItem(this.TOKEN_KEY, response.token);
     localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
+
     const expirationTime = Date.now() + response.expiresIn;
     localStorage.setItem(this.EXPIRES_IN_KEY, expirationTime.toString());
+
+    console.log('Token stored:', {
+      expiresIn: response.expiresIn,
+      expirationTime: new Date(expirationTime).toISOString(),
+      now: new Date().toISOString(),
+    });
   }
 
   private hasValidToken(): boolean {
@@ -72,10 +165,36 @@ export class AuthService {
     const expiresIn = localStorage.getItem(this.EXPIRES_IN_KEY);
 
     if (!token || !expiresIn) {
+      console.log('No token or expiration found');
       return false;
     }
 
     const expirationTime = parseInt(expiresIn, 10);
-    return Date.now() < expirationTime;
+    const isValid = Date.now() < expirationTime;
+
+    console.log('Token validation:', {
+      expirationTime: new Date(expirationTime).toISOString(),
+      now: new Date().toISOString(),
+      isValid,
+      timeRemaining: expirationTime - Date.now(),
+      timeRemainingMinutes: (expirationTime - Date.now()) / 60000,
+    });
+
+    if (!isValid && this.getRefreshToken() && !this.refreshTokenInProgress) {
+      console.log('Token expired, attempting to refresh...');
+      this.refreshAuthToken().subscribe({
+        next: () => {
+          console.log('Token refresh successful');
+          this.isAuthenticatedSubject.next(true);
+        },
+        error: (error) => {
+          console.error('Token refresh failed:', error);
+          this.logout();
+        },
+      });
+      return false;
+    }
+
+    return isValid;
   }
 }

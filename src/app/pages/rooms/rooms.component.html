@@ -1,0 +1,201 @@
+<div class="rooms-container">
+  <div class="rooms-header">
+    <h1 class="rooms-title">All Rooms</h1>
+    <p class="rooms-subtitle">Manage and view all hotel rooms</p>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading rooms...</p>
+    </div>
+  }
+
+  @if (!isLoading && errorMessage) {
+    <div class="error-container">
+      <svg
+        class="icon-error"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <p class="error-text">{{ errorMessage }}</p>
+      <button class="btn-retry" (click)="loadRooms()">Try Again</button>
+    </div>
+  }
+
+  @if (!isLoading && !errorMessage && rooms.length === 0) {
+    <div class="empty-state">
+      <svg
+        class="icon-empty"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+      </svg>
+      <p class="empty-text">No rooms available</p>
+    </div>
+  }
+
+  @if (!isLoading && !errorMessage && rooms.length > 0) {
+    <div class="rooms-stats">
+      <div class="stat-card">
+        <div class="stat-value">{{ rooms.length }}</div>
+        <div class="stat-label">Total Rooms</div>
+      </div>
+      <div class="stat-card stat-available">
+        <div class="stat-value">{{ availableRooms }}</div>
+        <div class="stat-label">Available</div>
+      </div>
+      <div class="stat-card stat-occupied">
+        <div class="stat-value">{{ occupiedRooms }}</div>
+        <div class="stat-label">Occupied</div>
+      </div>
+      <div class="stat-card stat-maintenance">
+        <div class="stat-value">{{ maintenanceRooms }}</div>
+        <div class="stat-label">Maintenance</div>
+      </div>
+      <div class="stat-card stat-out-of-service">
+        <div class="stat-value">{{ outOfServiceRooms }}</div>
+        <div class="stat-label">Out of Service</div>
+      </div>
+    </div>
+
+    <div class="rooms-grid">
+      @for (room of rooms; track room.id) {
+        <div class="room-card">
+          @if (room.images && room.images.length > 0) {
+            <div
+              class="room-image"
+              [style.backgroundImage]="'url(' + room.images[0] + ')'">
+              <span class="room-status" [ngClass]="getStatusClass(room.status)">
+                {{ getStatusText(room.status) }}
+              </span>
+            </div>
+          } @else {
+            <div class="room-image-placeholder">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              <span class="room-status" [ngClass]="getStatusClass(room.status)">
+                {{ getStatusText(room.status) }}
+              </span>
+            </div>
+          }
+
+          <div class="room-content">
+            <div class="room-header">
+              <h3 class="room-number">Room {{ room.roomNumber }}</h3>
+              <span class="room-type">{{
+                getRoomTypeDisplay(room.roomType)
+              }}</span>
+            </div>
+
+            <p class="room-description">{{ room.description }}</p>
+
+            <div class="room-details">
+              <div class="detail-item">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span
+                  >{{ room.maxOccupancy }}
+                  {{ room.maxOccupancy === 1 ? 'Guest' : 'Guests' }}</span
+                >
+              </div>
+
+              <div class="detail-item">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path
+                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                <span>{{ room.size }} m²</span>
+              </div>
+
+              <div class="detail-item">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <span>Floor {{ room.floor }}</span>
+              </div>
+            </div>
+
+            @if (room.amenities && room.amenities.length > 0) {
+              <div class="room-amenities">
+                <h4 class="amenities-title">Amenities</h4>
+                <div class="amenities-list">
+                  @for (amenity of room.amenities; track amenity) {
+                    <span class="amenity-tag">{{ amenity }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="room-footer">
+              <div class="room-price">
+                <span class="price-label">Per Night</span>
+                <span class="price-value">{{
+                  formatPrice(room.pricePerNight)
+                }}</span>
+              </div>
+              <div class="room-meta">
+                <span class="meta-item"
+                  >Created: {{ formatDate(room.createdAt) }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

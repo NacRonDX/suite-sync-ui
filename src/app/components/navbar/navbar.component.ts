@@ -15,6 +15,10 @@ export class NavbarComponent {
   private router = inject(Router);
   isAuthenticated$ = this.authService.isAuthenticated$;
 
+  get isStaffOrAdmin(): boolean {
+    return this.authService.isStaffOrAdmin();
+  }
+
   onLogout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);

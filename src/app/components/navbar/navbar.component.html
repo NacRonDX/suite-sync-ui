@@ -1,6 +1,22 @@
 <nav class="navbar">
   <div class="navbar-container">
     <a routerLink="/" class="navbar-brand">Suite Sync</a>
+    <div class="navbar-links">
+      @if (isAuthenticated$ | async) {
+        <a
+          routerLink="/"
+          class="nav-link"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          >Home</a
+        >
+        @if (isStaffOrAdmin) {
+          <a routerLink="/rooms" class="nav-link" routerLinkActive="active"
+            >Rooms</a
+          >
+        }
+      }
+    </div>
     <div class="navbar-actions">
       @if (isAuthenticated$ | async) {
         <button class="btn btn-outline" (click)="onLogout()">Logout</button>
