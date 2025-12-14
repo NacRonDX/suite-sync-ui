@@ -8,6 +8,11 @@ import {
   UpdateRoomRequest,
 } from '../../services/room.service';
 import { AuthService } from '../../services/auth.service';
+import {
+  ReviewService,
+  ReviewResponse,
+  CreateReviewRequest,
+} from '../../services/review.service';
 
 @Component({
   selector: 'app-room-detail',
@@ -21,6 +26,9 @@ export class RoomDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private authService = inject(AuthService);
+  private reviewService = inject(ReviewService);
+
+  protected readonly Math = Math;
 
   room: Room | null = null;
   isLoading = true;
@@ -34,8 +42,28 @@ export class RoomDetailComponent implements OnInit {
   showDeleteConfirm = false;
   isDeleting = false;
 
+  reviews: ReviewResponse[] = [];
+  isLoadingReviews = false;
+  reviewsErrorMessage = '';
+  showReviewForm = false;
+  isSubmittingReview = false;
+  reviewForm: CreateReviewRequest = {
+    rating: 5,
+    comment: '',
+  };
+
   get isAdmin(): boolean {
     return this.authService.hasRole('ADMIN');
+  }
+
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
+  get averageRating(): number {
+    if (this.reviews.length === 0) return 0;
+    const sum = this.reviews.reduce((acc, review) => acc + review.rating, 0);
+    return sum / this.reviews.length;
   }
 
   roomTypes = ['SINGLE', 'DOUBLE', 'SUITE', 'DELUXE', 'PENTHOUSE'];
@@ -45,6 +73,7 @@ export class RoomDetailComponent implements OnInit {
     const roomId = this.route.snapshot.paramMap.get('id');
     if (roomId) {
       this.loadRoom(+roomId);
+      this.loadReviews(+roomId);
     } else {
       this.router.navigate(['/not-found']);
     }
@@ -256,5 +285,107 @@ export class RoomDetailComponent implements OnInit {
         }
       },
     });
+  }
+
+  loadReviews(roomId: number): void {
+    this.isLoadingReviews = true;
+    this.reviewsErrorMessage = '';
+
+    this.reviewService.getReviewsByRoomId(roomId).subscribe({
+      next: (reviews) => {
+        this.reviews = reviews;
+        this.isLoadingReviews = false;
+      },
+      error: (error: any) => {
+        this.isLoadingReviews = false;
+        this.reviewsErrorMessage =
+          error.error?.message ||
+          'Failed to load reviews. Please try again later.';
+      },
+    });
+  }
+
+  openReviewForm(): void {
+    if (!this.isAuthenticated) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.showReviewForm = true;
+    this.reviewForm = {
+      rating: 5,
+      comment: '',
+    };
+  }
+
+  closeReviewForm(): void {
+    this.showReviewForm = false;
+    this.reviewForm = {
+      rating: 5,
+      comment: '',
+    };
+  }
+
+  submitReview(): void {
+    if (!this.room || this.isSubmittingReview) return;
+
+    if (
+      this.reviewForm.comment.length < 10 ||
+      this.reviewForm.comment.length > 1000
+    ) {
+      this.reviewsErrorMessage =
+        'Comment must be between 10 and 1000 characters.';
+      return;
+    }
+
+    this.isSubmittingReview = true;
+    this.reviewsErrorMessage = '';
+
+    this.reviewService.createReview(this.room.id, this.reviewForm).subscribe({
+      next: (review) => {
+        this.reviews.unshift(review);
+        this.isSubmittingReview = false;
+        this.closeReviewForm();
+      },
+      error: (error: any) => {
+        this.isSubmittingReview = false;
+        this.reviewsErrorMessage =
+          error.error?.message ||
+          'Failed to submit review. Please try again later.';
+      },
+    });
+  }
+
+  getStarArray(rating: number): boolean[] {
+    return Array(5)
+      .fill(false)
+      .map((_, index) => index < rating);
+  }
+
+  setRating(rating: number): void {
+    this.reviewForm.rating = rating;
+  }
+
+  formatReviewDate(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    } else if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+    } else {
+      const years = Math.floor(diffDays / 365);
+      return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+    }
   }
 }
