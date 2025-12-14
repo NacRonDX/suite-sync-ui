@@ -10,11 +10,9 @@
           [routerLinkActiveOptions]="{ exact: true }"
           >Home</a
         >
-        @if (isStaffOrAdmin) {
-          <a routerLink="/rooms" class="nav-link" routerLinkActive="active"
-            >Rooms</a
-          >
-        }
+        <a routerLink="/rooms" class="nav-link" routerLinkActive="active"
+          >Rooms</a
+        >
       }
     </div>
     <div class="navbar-actions">

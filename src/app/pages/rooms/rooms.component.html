@@ -71,28 +71,30 @@
   }
 
   @if (!isLoading && !errorMessage && rooms.length > 0) {
-    <div class="rooms-stats">
-      <div class="stat-card">
-        <div class="stat-value">{{ rooms.length }}</div>
-        <div class="stat-label">Total Rooms</div>
+    @if (isAdmin) {
+      <div class="rooms-stats">
+        <div class="stat-card">
+          <div class="stat-value">{{ rooms.length }}</div>
+          <div class="stat-label">Total Rooms</div>
+        </div>
+        <div class="stat-card stat-available">
+          <div class="stat-value">{{ availableRooms }}</div>
+          <div class="stat-label">Available</div>
+        </div>
+        <div class="stat-card stat-occupied">
+          <div class="stat-value">{{ occupiedRooms }}</div>
+          <div class="stat-label">Occupied</div>
+        </div>
+        <div class="stat-card stat-maintenance">
+          <div class="stat-value">{{ maintenanceRooms }}</div>
+          <div class="stat-label">Maintenance</div>
+        </div>
+        <div class="stat-card stat-out-of-service">
+          <div class="stat-value">{{ outOfServiceRooms }}</div>
+          <div class="stat-label">Out of Service</div>
+        </div>
       </div>
-      <div class="stat-card stat-available">
-        <div class="stat-value">{{ availableRooms }}</div>
-        <div class="stat-label">Available</div>
-      </div>
-      <div class="stat-card stat-occupied">
-        <div class="stat-value">{{ occupiedRooms }}</div>
-        <div class="stat-label">Occupied</div>
-      </div>
-      <div class="stat-card stat-maintenance">
-        <div class="stat-value">{{ maintenanceRooms }}</div>
-        <div class="stat-label">Maintenance</div>
-      </div>
-      <div class="stat-card stat-out-of-service">
-        <div class="stat-value">{{ outOfServiceRooms }}</div>
-        <div class="stat-label">Out of Service</div>
-      </div>
-    </div>
+    }
 
     <div class="rooms-grid">
       @for (room of rooms; track room.id) {
