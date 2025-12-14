@@ -256,6 +256,32 @@
                   formatPrice(room.pricePerNight)
                 }}</span>
               </div>
+              @if (isAuthenticated && room.status === 'AVAILABLE') {
+                <button
+                  class="btn-book"
+                  (click)="openBookingModal(room, $event)">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  Book Now
+                </button>
+              }
             </div>
           </div>
         </div>
@@ -471,6 +497,213 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+@if (showBookingModal && selectedRoom) {
+  <div class="modal-overlay" (click)="closeBookingModal()">
+    <div class="modal-content booking-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Book Room {{ selectedRoom.roomNumber }}</h2>
+        <button class="btn-close" (click)="closeBookingModal()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      @if (bookingSuccessMessage) {
+        <div class="success-message">
+          {{ bookingSuccessMessage }}
+        </div>
+      }
+
+      @if (bookingErrorMessage) {
+        <div class="error-message">
+          {{ bookingErrorMessage }}
+        </div>
+      }
+
+      @if (availabilityErrorMessage) {
+        <div class="error-message">
+          {{ availabilityErrorMessage }}
+        </div>
+      }
+
+      <div class="booking-form">
+        <div class="room-summary">
+          <h3>Room Details</h3>
+          <div class="summary-item">
+            <span class="label">Room Type:</span>
+            <span class="value">{{
+              getRoomTypeDisplay(selectedRoom.roomType)
+            }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Max Occupancy:</span>
+            <span class="value"
+              >{{ selectedRoom.maxOccupancy }}
+              {{ selectedRoom.maxOccupancy === 1 ? 'Guest' : 'Guests' }}</span
+            >
+          </div>
+          <div class="summary-item">
+            <span class="label">Price Per Night:</span>
+            <span class="value">{{
+              formatPrice(selectedRoom.pricePerNight)
+            }}</span>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="checkInDate">Check-in Date *</label>
+              <input
+                type="date"
+                id="checkInDate"
+                [(ngModel)]="checkInDate"
+                [min]="minCheckInDate"
+                (change)="availability = null"
+                required />
+            </div>
+
+            <div class="form-group">
+              <label for="checkOutDate">Check-out Date *</label>
+              <input
+                type="date"
+                id="checkOutDate"
+                [(ngModel)]="checkOutDate"
+                [min]="minCheckOutDate"
+                (change)="availability = null"
+                required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="numberOfGuests">Number of Guests *</label>
+            <input
+              type="number"
+              id="numberOfGuests"
+              [(ngModel)]="numberOfGuests"
+              [min]="1"
+              [max]="selectedRoom.maxOccupancy"
+              required />
+          </div>
+
+          <div class="form-group">
+            <label for="specialRequests">Special Requests</label>
+            <textarea
+              id="specialRequests"
+              [(ngModel)]="specialRequests"
+              maxlength="500"
+              rows="3"
+              placeholder="Enter any special requests (optional)"></textarea>
+          </div>
+
+          <button
+            type="button"
+            class="btn-check-availability"
+            (click)="checkAvailability()"
+            [disabled]="
+              isCheckingAvailability || !checkInDate || !checkOutDate
+            ">
+            @if (isCheckingAvailability) {
+              <span class="spinner-small"></span>
+              Checking...
+            } @else {
+              Check Availability
+            }
+          </button>
+
+          @if (availability) {
+            <div class="availability-result">
+              @if (availability.available) {
+                <div class="availability-success">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Room is available!</span>
+                </div>
+                <div class="booking-summary">
+                  <div class="summary-row">
+                    <span>Number of Nights:</span>
+                    <span>{{ availability.numberOfNights }}</span>
+                  </div>
+                  <div class="summary-row">
+                    <span>Price per Night:</span>
+                    <span>{{ formatPrice(availability.pricePerNight) }}</span>
+                  </div>
+                  <div class="summary-row total">
+                    <span>Total Price:</span>
+                    <span>{{ formatPrice(availability.totalPrice) }}</span>
+                  </div>
+                </div>
+              } @else {
+                <div class="availability-error">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                  <span>Room is not available for these dates</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-cancel"
+            (click)="closeBookingModal()"
+            [disabled]="isBooking">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn-submit"
+            (click)="bookRoom()"
+            [disabled]="
+              isBooking ||
+              !availability ||
+              !availability.available ||
+              !checkInDate ||
+              !checkOutDate ||
+              !numberOfGuests
+            ">
+            @if (isBooking) {
+              <span class="spinner-small"></span>
+              Booking...
+            } @else {
+              Confirm Booking
+            }
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 }

@@ -6,8 +6,13 @@ import {
   RoomService,
   Room,
   CreateRoomRequest,
+  AvailabilityResponse,
 } from '../../services/room.service';
 import { AuthService } from '../../services/auth.service';
+import {
+  BookingService,
+  CreateBookingRequest,
+} from '../../services/booking.service';
 
 @Component({
   selector: 'app-rooms',
@@ -18,6 +23,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class RoomsComponent implements OnInit {
   private roomService = inject(RoomService);
+  private bookingService = inject(BookingService);
   private router = inject(Router);
   private authService = inject(AuthService);
   rooms: Room[] = [];
@@ -27,6 +33,19 @@ export class RoomsComponent implements OnInit {
   showCreateModal = false;
   isCreating = false;
   createErrorMessage = '';
+
+  showBookingModal = false;
+  selectedRoom: Room | null = null;
+  checkInDate = '';
+  checkOutDate = '';
+  numberOfGuests = 1;
+  specialRequests = '';
+  availability: AvailabilityResponse | null = null;
+  isCheckingAvailability = false;
+  isBooking = false;
+  bookingErrorMessage = '';
+  availabilityErrorMessage = '';
+  bookingSuccessMessage = '';
 
   newRoom: CreateRoomRequest = {
     roomNumber: '',
@@ -256,5 +275,110 @@ export class RoomsComponent implements OnInit {
           error.error?.message || 'Failed to create room. Please try again.';
       },
     });
+  }
+
+  openBookingModal(room: Room, event: Event): void {
+    event.stopPropagation();
+    this.selectedRoom = room;
+    this.showBookingModal = true;
+    this.resetBookingForm();
+  }
+
+  closeBookingModal(): void {
+    this.showBookingModal = false;
+    this.selectedRoom = null;
+    this.resetBookingForm();
+  }
+
+  resetBookingForm(): void {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date(tomorrow);
+    dayAfter.setDate(dayAfter.getDate() + 1);
+
+    this.checkInDate = tomorrow.toISOString().split('T')[0];
+    this.checkOutDate = dayAfter.toISOString().split('T')[0];
+    this.numberOfGuests = 1;
+    this.specialRequests = '';
+    this.availability = null;
+    this.bookingErrorMessage = '';
+    this.availabilityErrorMessage = '';
+    this.bookingSuccessMessage = '';
+  }
+
+  checkAvailability(): void {
+    if (!this.selectedRoom) return;
+
+    this.isCheckingAvailability = true;
+    this.availabilityErrorMessage = '';
+    this.availability = null;
+
+    this.roomService
+      .checkRoomAvailability(
+        this.selectedRoom.id,
+        this.checkInDate,
+        this.checkOutDate
+      )
+      .subscribe({
+        next: (response) => {
+          this.isCheckingAvailability = false;
+          this.availability = response;
+        },
+        error: (error: any) => {
+          this.isCheckingAvailability = false;
+          this.availabilityErrorMessage =
+            error.error?.message ||
+            'Failed to check availability. Please try again.';
+        },
+      });
+  }
+
+  bookRoom(): void {
+    if (!this.selectedRoom || !this.availability) return;
+
+    this.isBooking = true;
+    this.bookingErrorMessage = '';
+    this.bookingSuccessMessage = '';
+
+    const bookingRequest: CreateBookingRequest = {
+      roomId: this.selectedRoom.id,
+      checkInDate: this.checkInDate,
+      checkOutDate: this.checkOutDate,
+      numberOfGuests: this.numberOfGuests,
+      specialRequests: this.specialRequests || undefined,
+    };
+
+    this.bookingService.createBooking(bookingRequest).subscribe({
+      next: (booking) => {
+        this.isBooking = false;
+        this.bookingSuccessMessage = 'Booking created successfully!';
+        setTimeout(() => {
+          this.closeBookingModal();
+        }, 2000);
+      },
+      error: (error: any) => {
+        this.isBooking = false;
+        this.bookingErrorMessage =
+          error.error?.message || 'Failed to create booking. Please try again.';
+      },
+    });
+  }
+
+  get minCheckInDate(): string {
+    const today = new Date();
+    today.setDate(today.getDate() + 1);
+    return today.toISOString().split('T')[0];
+  }
+
+  get minCheckOutDate(): string {
+    if (!this.checkInDate) return this.minCheckInDate;
+    const checkIn = new Date(this.checkInDate);
+    checkIn.setDate(checkIn.getDate() + 1);
+    return checkIn.toISOString().split('T')[0];
+  }
+
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
   }
 }

@@ -58,6 +58,16 @@ export interface CreateRoomRequest {
   images?: string[];
 }
 
+export interface AvailabilityResponse {
+  available: boolean;
+  roomId: number;
+  checkInDate: string;
+  checkOutDate: string;
+  totalPrice: number;
+  pricePerNight: number;
+  numberOfNights: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -90,5 +100,18 @@ export class RoomService {
   deleteRoom(id: number): Observable<void> {
     const roomUrl = this.configService.getApiUrl(`rooms/${id}`);
     return this.http.delete<void>(roomUrl);
+  }
+
+  checkRoomAvailability(
+    roomId: number,
+    checkInDate: string,
+    checkOutDate: string
+  ): Observable<AvailabilityResponse> {
+    const roomUrl = this.configService.getApiUrl(
+      `rooms/${roomId}/availability`
+    );
+    return this.http.get<AvailabilityResponse>(roomUrl, {
+      params: { checkInDate, checkOutDate },
+    });
   }
 }
