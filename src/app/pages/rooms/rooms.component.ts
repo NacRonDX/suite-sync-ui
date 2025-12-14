@@ -1,20 +1,49 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RoomService, Room } from '../../services/room.service';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import {
+  RoomService,
+  Room,
+  CreateRoomRequest,
+} from '../../services/room.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-rooms',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './rooms.component.html',
   styleUrl: './rooms.component.scss',
 })
 export class RoomsComponent implements OnInit {
   private roomService = inject(RoomService);
-
+  private router = inject(Router);
+  private authService = inject(AuthService);
   rooms: Room[] = [];
   isLoading = true;
   errorMessage = '';
+  currentImageIndexes = new Map<number, number>();
+  showCreateModal = false;
+  isCreating = false;
+  createErrorMessage = '';
+
+  newRoom: CreateRoomRequest = {
+    roomNumber: '',
+    roomType: 'SINGLE',
+    maxOccupancy: 1,
+    pricePerNight: 0,
+    size: 0,
+    floor: 0,
+    description: '',
+    amenities: [],
+    images: [],
+  };
+
+  amenityInput = '';
+  imageInput = '';
+
+  roomTypes = ['SINGLE', 'DOUBLE', 'SUITE', 'DELUXE', 'PENTHOUSE'];
 
   get availableRooms(): number {
     return this.rooms.filter((r) => r.status === 'AVAILABLE').length;
@@ -111,6 +140,121 @@ export class RoomsComponent implements OnInit {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+    });
+  }
+  viewRoomDetails(roomId: number): void {
+    this.router.navigate(['/rooms', roomId]);
+  }
+
+  getCurrentImageIndex(roomId: number): number {
+    return this.currentImageIndexes.get(roomId) || 0;
+  }
+
+  setImageIndex(roomId: number, index: number, event: Event): void {
+    event.stopPropagation();
+    this.currentImageIndexes.set(roomId, index);
+  }
+
+  nextImage(roomId: number, totalImages: number, event: Event): void {
+    event.stopPropagation();
+    const currentIndex = this.getCurrentImageIndex(roomId);
+    const nextIndex = (currentIndex + 1) % totalImages;
+    this.currentImageIndexes.set(roomId, nextIndex);
+  }
+
+  prevImage(roomId: number, totalImages: number, event: Event): void {
+    event.stopPropagation();
+    const currentIndex = this.getCurrentImageIndex(roomId);
+    const prevIndex = currentIndex === 0 ? totalImages - 1 : currentIndex - 1;
+    this.currentImageIndexes.set(roomId, prevIndex);
+  }
+
+  get isAdmin(): boolean {
+    return this.authService.hasRole('ADMIN');
+  }
+
+  openCreateModal(): void {
+    this.showCreateModal = true;
+    this.createErrorMessage = '';
+    this.resetForm();
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal = false;
+    this.resetForm();
+  }
+
+  resetForm(): void {
+    this.newRoom = {
+      roomNumber: '',
+      roomType: 'SINGLE',
+      maxOccupancy: 1,
+      pricePerNight: 0,
+      size: 0,
+      floor: 0,
+      description: '',
+      amenities: [],
+      images: [],
+    };
+    this.amenityInput = '';
+    this.imageInput = '';
+  }
+
+  addAmenity(): void {
+    if (
+      this.amenityInput.trim() &&
+      !this.newRoom.amenities?.includes(this.amenityInput.trim())
+    ) {
+      if (!this.newRoom.amenities) {
+        this.newRoom.amenities = [];
+      }
+      this.newRoom.amenities.push(this.amenityInput.trim());
+      this.amenityInput = '';
+    }
+  }
+
+  removeAmenity(amenity: string): void {
+    if (this.newRoom.amenities) {
+      this.newRoom.amenities = this.newRoom.amenities.filter(
+        (a) => a !== amenity
+      );
+    }
+  }
+
+  addImage(): void {
+    if (
+      this.imageInput.trim() &&
+      !this.newRoom.images?.includes(this.imageInput.trim())
+    ) {
+      if (!this.newRoom.images) {
+        this.newRoom.images = [];
+      }
+      this.newRoom.images.push(this.imageInput.trim());
+      this.imageInput = '';
+    }
+  }
+
+  removeImage(image: string): void {
+    if (this.newRoom.images) {
+      this.newRoom.images = this.newRoom.images.filter((img) => img !== image);
+    }
+  }
+
+  createRoom(): void {
+    this.isCreating = true;
+    this.createErrorMessage = '';
+
+    this.roomService.createRoom(this.newRoom).subscribe({
+      next: (room) => {
+        this.isCreating = false;
+        this.rooms.unshift(room);
+        this.closeCreateModal();
+      },
+      error: (error: any) => {
+        this.isCreating = false;
+        this.createErrorMessage =
+          error.error?.message || 'Failed to create room. Please try again.';
+      },
     });
   }
 }

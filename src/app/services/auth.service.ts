@@ -150,11 +150,12 @@ export class AuthService {
     localStorage.setItem(this.TOKEN_KEY, response.token);
     localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
 
-    const expirationTime = Date.now() + response.expiresIn;
+    const expirationTime = Date.now() + response.expiresIn * 1000;
     localStorage.setItem(this.EXPIRES_IN_KEY, expirationTime.toString());
 
     console.log('Token stored:', {
       expiresIn: response.expiresIn,
+      expiresInMs: response.expiresIn * 1000,
       expirationTime: new Date(expirationTime).toISOString(),
       now: new Date().toISOString(),
     });
@@ -164,36 +165,33 @@ export class AuthService {
     const token = this.getToken();
     const expiresIn = localStorage.getItem(this.EXPIRES_IN_KEY);
 
-    if (!token || !expiresIn) {
-      console.log('No token or expiration found');
+    if (!token) {
+      console.log('No token found');
+      return false;
+    }
+
+    if (!expiresIn) {
+      console.log('No expiration found');
       return false;
     }
 
     const expirationTime = parseInt(expiresIn, 10);
-    const isValid = Date.now() < expirationTime;
+
+    if (isNaN(expirationTime)) {
+      console.log('Invalid expiration time:', expiresIn);
+      return false;
+    }
+
+    const now = Date.now();
+    const isValid = now < expirationTime;
 
     console.log('Token validation:', {
       expirationTime: new Date(expirationTime).toISOString(),
-      now: new Date().toISOString(),
+      now: new Date(now).toISOString(),
       isValid,
-      timeRemaining: expirationTime - Date.now(),
-      timeRemainingMinutes: (expirationTime - Date.now()) / 60000,
+      timeRemaining: expirationTime - now,
+      timeRemainingMinutes: ((expirationTime - now) / 60000).toFixed(2),
     });
-
-    if (!isValid && this.getRefreshToken() && !this.refreshTokenInProgress) {
-      console.log('Token expired, attempting to refresh...');
-      this.refreshAuthToken().subscribe({
-        next: () => {
-          console.log('Token refresh successful');
-          this.isAuthenticatedSubject.next(true);
-        },
-        error: (error) => {
-          console.error('Token refresh failed:', error);
-          this.logout();
-        },
-      });
-      return false;
-    }
 
     return isValid;
   }

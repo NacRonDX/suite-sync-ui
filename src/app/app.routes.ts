@@ -4,6 +4,8 @@ import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { ActivateComponent } from './pages/activate/activate.component';
 import { RoomsComponent } from './pages/rooms/rooms.component';
+import { RoomDetailComponent } from './pages/room-detail/room-detail.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
 
@@ -23,14 +25,21 @@ export const routes: Routes = [
   {
     path: 'rooms',
     component: RoomsComponent,
-    canActivate: [roleGuard(['STAFF', 'ADMIN'])],
+  },
+  {
+    path: 'rooms/:id',
+    component: RoomDetailComponent,
   },
   {
     path: 'api/v1/users/:userId/activate',
     component: ActivateComponent,
   },
   {
+    path: 'not-found',
+    component: NotFoundComponent,
+  },
+  {
     path: '**',
-    redirectTo: '',
+    redirectTo: 'not-found',
   },
 ];

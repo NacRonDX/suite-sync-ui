@@ -1,7 +1,27 @@
 <div class="rooms-container">
   <div class="rooms-header">
-    <h1 class="rooms-title">All Rooms</h1>
-    <p class="rooms-subtitle">Manage and view all hotel rooms</p>
+    <div class="header-content">
+      <div>
+        <h1 class="rooms-title">All Rooms</h1>
+        <p class="rooms-subtitle">Manage and view all hotel rooms</p>
+      </div>
+      @if (isAdmin) {
+        <button class="btn-create-room" (click)="openCreateModal()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Create Room
+        </button>
+      }
+    </div>
   </div>
 
   @if (isLoading) {
@@ -78,9 +98,56 @@
       @for (room of rooms; track room.id) {
         <div class="room-card">
           @if (room.images && room.images.length > 0) {
-            <div
-              class="room-image"
-              [style.backgroundImage]="'url(' + room.images[0] + ')'">
+            <div class="room-carousel">
+              <div class="carousel-container">
+                @for (image of room.images; track $index) {
+                  <div
+                    class="carousel-image"
+                    [class.active]="$index === getCurrentImageIndex(room.id)"
+                    [style.backgroundImage]="'url(' + image + ')'"></div>
+                }
+              </div>
+              <button
+                class="carousel-btn carousel-prev"
+                (click)="prevImage(room.id, room.images.length, $event)"
+                [style.display]="room.images.length > 1 ? 'flex' : 'none'">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <button
+                class="carousel-btn carousel-next"
+                (click)="nextImage(room.id, room.images.length, $event)"
+                [style.display]="room.images.length > 1 ? 'flex' : 'none'">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+              @if (room.images.length > 1) {
+                <div class="carousel-indicators">
+                  @for (image of room.images; track $index) {
+                    <span
+                      class="indicator"
+                      [class.active]="$index === getCurrentImageIndex(room.id)"
+                      (click)="setImageIndex(room.id, $index, $event)">
+                    </span>
+                  }
+                </div>
+              }
               <span class="room-status" [ngClass]="getStatusClass(room.status)">
                 {{ getStatusText(room.status) }}
               </span>
@@ -106,7 +173,7 @@
             </div>
           }
 
-          <div class="room-content">
+          <div class="room-content" (click)="viewRoomDetails(room.id)">
             <div class="room-header">
               <h3 class="room-number">Room {{ room.roomNumber }}</h3>
               <span class="room-type">{{
@@ -199,3 +266,214 @@
     </div>
   }
 </div>
+
+@if (showCreateModal) {
+  <div class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Create New Room</h2>
+        <button class="btn-close" (click)="closeCreateModal()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      @if (createErrorMessage) {
+        <div class="error-message">
+          {{ createErrorMessage }}
+        </div>
+      }
+
+      <form class="create-form" (ngSubmit)="createRoom()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="roomNumber">Room Number *</label>
+            <input
+              type="text"
+              id="roomNumber"
+              [(ngModel)]="newRoom.roomNumber"
+              name="roomNumber"
+              required
+              maxlength="10"
+              placeholder="e.g., 101" />
+          </div>
+
+          <div class="form-group">
+            <label for="roomType">Room Type *</label>
+            <select
+              id="roomType"
+              [(ngModel)]="newRoom.roomType"
+              name="roomType"
+              required>
+              @for (type of roomTypes; track type) {
+                <option [value]="type">{{ getRoomTypeDisplay(type) }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="maxOccupancy">Max Occupancy *</label>
+            <input
+              type="number"
+              id="maxOccupancy"
+              [(ngModel)]="newRoom.maxOccupancy"
+              name="maxOccupancy"
+              required
+              min="1"
+              max="10"
+              placeholder="e.g., 2" />
+          </div>
+
+          <div class="form-group">
+            <label for="pricePerNight">Price Per Night ($) *</label>
+            <input
+              type="number"
+              id="pricePerNight"
+              [(ngModel)]="newRoom.pricePerNight"
+              name="pricePerNight"
+              required
+              min="0"
+              step="0.01"
+              placeholder="e.g., 150.00" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="size">Size (m²) *</label>
+            <input
+              type="number"
+              id="size"
+              [(ngModel)]="newRoom.size"
+              name="size"
+              required
+              min="0"
+              step="0.1"
+              placeholder="e.g., 25.5" />
+          </div>
+
+          <div class="form-group">
+            <label for="floor">Floor</label>
+            <input
+              type="number"
+              id="floor"
+              [(ngModel)]="newRoom.floor"
+              name="floor"
+              min="0"
+              placeholder="e.g., 1" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            [(ngModel)]="newRoom.description"
+            name="description"
+            maxlength="1000"
+            rows="3"
+            placeholder="Enter a detailed description of the room"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Amenities</label>
+          <div class="input-with-button">
+            <input
+              type="text"
+              [(ngModel)]="amenityInput"
+              name="amenityInput"
+              placeholder="e.g., WiFi, TV, Air Conditioning"
+              (keyup.enter)="addAmenity()" />
+            <button type="button" class="btn-add" (click)="addAmenity()">
+              Add
+            </button>
+          </div>
+          @if (newRoom.amenities && newRoom.amenities.length > 0) {
+            <div class="tags-list">
+              @for (amenity of newRoom.amenities; track amenity) {
+                <span class="tag">
+                  {{ amenity }}
+                  <button
+                    type="button"
+                    class="tag-remove"
+                    (click)="removeAmenity(amenity)">
+                    ×
+                  </button>
+                </span>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Images</label>
+          <div class="input-with-button">
+            <input
+              type="url"
+              [(ngModel)]="imageInput"
+              name="imageInput"
+              placeholder="Enter image URL"
+              (keyup.enter)="addImage()" />
+            <button type="button" class="btn-add" (click)="addImage()">
+              Add
+            </button>
+          </div>
+          @if (newRoom.images && newRoom.images.length > 0) {
+            <div class="images-list">
+              @for (image of newRoom.images; track image) {
+                <div class="image-item">
+                  <img [src]="image" alt="Room preview" />
+                  <button
+                    type="button"
+                    class="btn-remove-image"
+                    (click)="removeImage(image)">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-cancel"
+            (click)="closeCreateModal()"
+            [disabled]="isCreating">
+            Cancel
+          </button>
+          <button type="submit" class="btn-submit" [disabled]="isCreating">
+            @if (isCreating) {
+              <span class="spinner-small"></span>
+              Creating...
+            } @else {
+              Create Room
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
